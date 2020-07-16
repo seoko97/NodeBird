@@ -1,0 +1,6 @@
+node_module/*
+node_module
+.next
+.next/*
+
+
