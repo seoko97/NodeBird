@@ -1,14 +1,8 @@
 import React, { useState, useCallback } from 'react';
 import { Form, Input, Checkbox, Button } from 'antd';
 import PropTypes from 'prop-types';
-
-const TextInput = ({ value }) => {
-	return <div>{value}</div>;
-};
-
-TextInput.PropTypes = {
-	value: PropTypes.string,
-};
+import { useDispatch } from 'react-redux';
+import { signUpAction } from '../reducers/user';
 
 export const useInput = (init = null) => {
 	const [value, setter] = useState(init);
@@ -34,6 +28,8 @@ const Signup = () => {
 	const [passwordError, setPasswordError] = useState(false);
 	const [termError, setTermError] = useState(false);
 
+	const dispatch = useDispatch();
+
 	const onSubmit = useCallback(
 		(e) => {
 			e.preventDefault();
@@ -44,6 +40,13 @@ const Signup = () => {
 			if (!term) {
 				return setTermError(true);
 			}
+			dispatch(
+				signUpAction({
+					id,
+					password,
+					nick,
+				}),
+			);
 		},
 		//함수 내부에서 state를 사용하기 때문에 해당 배열에 입력
 		[password, passwordcheck, term],
@@ -58,13 +61,13 @@ const Signup = () => {
 	);
 
 	const onChangeTerm = useCallback((e) => {
+		setTermError(false);
 		setTerm(e.target.checked);
 	}, []);
 
 	return (
 		<>
 			<Form onSubmit={onSubmit} style={{ padding: 10 }}>
-				<TextInput value="135" />
 				회원가입
 				<div>
 					<label>아이디</label>
@@ -104,7 +107,7 @@ const Signup = () => {
 						약관동의
 					</Checkbox>
 
-					{!term && <div style={{ color: 'red' }}>약관에 동의하세요.</div>}
+					{termError && <div style={{ color: 'red' }}>약관에 동의하세요.</div>}
 				</div>
 				<div style={{ marginTop: 10 }}>
 					<Button type="primary" htmlType="submit">
