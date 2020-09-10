@@ -140,3 +140,11 @@ react-nodebird-aws.pemgiut
 node_modules
 .env
 .next
+/backend/uploads
+
+!**/.eslintrc*
+node_modules*
+dist
+*.svg
+*.ico
+*.lock
