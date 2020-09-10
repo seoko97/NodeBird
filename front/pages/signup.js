@@ -1,8 +1,9 @@
-import React, { useState, useCallback } from 'react';
+import React, { useState, useCallback, useEffect } from 'react';
 import { Form, Input, Checkbox, Button } from 'antd';
-import PropTypes from 'prop-types';
-import { useDispatch } from 'react-redux';
-import { signUpAction } from '../reducers/user';
+import { useDispatch, useSelector } from 'react-redux';
+import Router from 'next/router';
+import styled from 'styled-components';
+import { SIGN_UP_REQUEST } from '../reducers/user';
 
 export const useInput = (init = null) => {
 	const [value, setter] = useState(init);
@@ -11,6 +12,10 @@ export const useInput = (init = null) => {
 	}, []);
 	return [value, handler];
 };
+
+const Error = styled.div`
+	color: red;
+`;
 
 const Signup = () => {
 	// 커스텀 훅
@@ -27,6 +32,14 @@ const Signup = () => {
 	const [term, setTerm] = useState(false);
 	const [passwordError, setPasswordError] = useState(false);
 	const [termError, setTermError] = useState(false);
+	const { isSigningUp, me } = useSelector((state) => state.user);
+
+	useEffect(() => {
+		if (me) {
+			alert('로그인했으니 메인페이지로 이동합니다.');
+			Router.push('/');
+		}
+	}, [me && me.id]);
 
 	const dispatch = useDispatch();
 
@@ -40,16 +53,17 @@ const Signup = () => {
 			if (!term) {
 				return setTermError(true);
 			}
-			dispatch(
-				signUpAction({
-					id,
+			dispatch({
+				type: SIGN_UP_REQUEST,
+				data: {
+					userId: id,
 					password,
-					nick,
-				}),
-			);
+					nickname: nick,
+				},
+			});
 		},
-		//함수 내부에서 state를 사용하기 때문에 해당 배열에 입력
-		[password, passwordcheck, term],
+		// 함수 내부에서 state를 사용하기 때문에 해당 배열에 입력
+		[id, nick, password, passwordcheck, term],
 	);
 
 	const onChangePasswordChk = useCallback(
@@ -65,22 +79,26 @@ const Signup = () => {
 		setTerm(e.target.checked);
 	}, []);
 
+	if (me) {
+		return null;
+	}
+
 	return (
 		<>
 			<Form onSubmit={onSubmit} style={{ padding: 10 }}>
 				회원가입
 				<div>
-					<label>아이디</label>
+					<label htmlFor="user-id">아이디</label>
 					<br />
 					<Input name="user-id" value={id} required onChange={onChangeId} />
 				</div>
 				<div>
-					<label>닉네임</label>
+					<label htmlFor="user-nick">닉네임</label>
 					<br />
 					<Input name="user-nick" value={nick} required onChange={onChangeNick} />
 				</div>
 				<div>
-					<label>비밀번호</label>
+					<label htmlFor="user-password">비밀번호</label>
 					<br />
 					<Input
 						name="user-password"
@@ -91,7 +109,7 @@ const Signup = () => {
 					/>
 				</div>
 				<div>
-					<label>비밀번호 체크</label>
+					<label htmlFor="user-password-check">비밀번호 체크</label>
 					<br />
 					<Input
 						name="user-password-check"
@@ -100,17 +118,17 @@ const Signup = () => {
 						required
 						onChange={onChangePasswordChk}
 					/>
-					{passwordError && <div style={{ color: 'red' }}>일치하지 않습니다.</div>}
+					{passwordError && <Error>일치하지 않습니다.</Error>}
 				</div>
 				<div>
 					<Checkbox name="user-term" checked={term} onChange={onChangeTerm}>
 						약관동의
 					</Checkbox>
 
-					{termError && <div style={{ color: 'red' }}>약관에 동의하세요.</div>}
+					{termError && <Error>약관에 동의하세요.</Error>}
 				</div>
 				<div style={{ marginTop: 10 }}>
-					<Button type="primary" htmlType="submit">
+					<Button type="primary" htmlType="submit" loading={isSigningUp}>
 						가입하기
 					</Button>
 				</div>

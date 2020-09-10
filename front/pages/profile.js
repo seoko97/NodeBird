@@ -1,49 +1,104 @@
-import React from 'react';
+import React, { useCallback } from 'react';
+import { useDispatch, useSelector } from 'react-redux';
 import { Button, List, Card, Icon } from 'antd';
-import { StopOutlined } from '@ant-design/icons';
-import NicknameEditForm from '../component/NicknameEditForm';
+import NicknameEditForm from '../containers/NicknameEditForm';
+import {
+	UNFOLLOW_USER_REQUEST,
+	REMOVE_FOLLOWER_REQUEST,
+	LOAD_FOLLOWERS_REQUEST,
+	LOAD_FOLLOWINGS_REQUEST,
+} from '../reducers/user';
+import { LOAD_USER_POSTS_REQUEST } from '../reducers/post';
+import PostCard from '../containers/PostCard';
+import FollowList from '../component/FollowList';
 
 const Profile = () => {
+	const dispatch = useDispatch();
+	const { followerList, followingList, hasMoreFollower, hasMoreFollowing } = useSelector(
+		(state) => state.user,
+	);
+	const { mainPosts } = useSelector((state) => state.post);
+
+	const onUnfollow = useCallback(
+		(userId) => () => {
+			dispatch({
+				type: UNFOLLOW_USER_REQUEST,
+				data: userId,
+			});
+		},
+		[],
+	);
+
+	const onRemoveFollow = useCallback(
+		(userId) => () => {
+			dispatch({
+				type: REMOVE_FOLLOWER_REQUEST,
+				data: userId,
+			});
+		},
+		[],
+	);
+
+	const loadMorefollowings = useCallback(() => {
+		dispatch({
+			type: LOAD_FOLLOWINGS_REQUEST,
+			offset: followingList.length,
+		});
+	}, [followingList.length]);
+
+	const loadMorefollowers = useCallback(() => {
+		dispatch({
+			type: LOAD_FOLLOWERS_REQUEST,
+			offset: followerList.length,
+		});
+	}, [followerList.length]);
+
 	return (
 		<div>
 			<NicknameEditForm />
 			{/* grid: 아이탬글 간의 간격 조정 */}
 
-			<List
-				style={{ marginBottom: '20px' }}
-				grid={{ gutter: 4, xs: 2, md: 3 }}
-				size="small"
-				header={<div>팔로워 목록</div>}
-				loadMore={<Button style={{ width: '100%' }}>더보기</Button>}
-				bordered
-				dataSource={['SH', '바보', '노드버드오피셜']}
-				renderItem={(item) => (
-					<List.Item style={{ marginTop: '20px' }}>
-						{/* JSX 내부에서 배열을 사용하여 태그를 생성할 경우 반드시 키를 입력(반복문) */}
-						<Card actions={[<Icon type="stop" key="stop" />]}>
-							<Card.Meta description={item} />
-						</Card>
-					</List.Item>
-				)}
+			<FollowList
+				header="팔로잉 목록"
+				hasMore={hasMoreFollowing}
+				onClickMore={loadMorefollowings}
+				data={followingList}
+				onClickStop={onUnfollow}
+			/>
+			<FollowList
+				header="팔로워 목록"
+				hasMore={hasMoreFollower}
+				onClickMore={loadMorefollowers}
+				data={followerList}
+				onClickStop={onRemoveFollow}
 			/>
 
-			<List
-				style={{ marginBottom: '20px' }}
-				grid={{ gutter: 4, xs: 2, md: 3 }}
-				size="small"
-				header={<div>팔로잉 목록</div>}
-				loadMore={<Button style={{ width: '100%' }}>더보기</Button>}
-				bordered
-				dataSource={['SH', '바보', '노드버드오피셜']}
-				renderItem={(item) => (
-					<List.Item style={{ marginTop: '20px' }}>
-						<Card actions={[<Icon type="stop" key="stop" />]}>
-							<Card.Meta description={item} />
-						</Card>
-					</List.Item>
-				)}
-			/>
+			<div>
+				{mainPosts.map((c) => {
+					return <PostCard key={c.createdAt} post={c} />;
+				})}
+			</div>
 		</div>
 	);
 };
+
+Profile.getInitialProps = async (context) => {
+	const state = context.store.getState();
+	// 이 직전에 LOAD_USERS_REQUEST
+	context.store.dispatch({
+		type: LOAD_FOLLOWERS_REQUEST,
+		data: state.user.me && state.user.me.id,
+	});
+	context.store.dispatch({
+		type: LOAD_FOLLOWINGS_REQUEST,
+		data: state.user.me && state.user.me.id,
+	});
+	context.store.dispatch({
+		type: LOAD_USER_POSTS_REQUEST,
+		data: state.user.me && state.user.me.id,
+	});
+
+	// 이 쯤에서 LOAD_USERS_SUCCESS 돼서 me가 생김.
+};
+
 export default Profile;
