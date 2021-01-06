@@ -13,7 +13,7 @@
 		"@next/bundle-analyzer": "^9.5.3",
 		"@zeit/next-bundle-analyzer": "^0.1.2",
 		"antd": "^3.26.18",
-		"axios": "^0.18.1",
+		"axios": "^0.21.1",
 		"babel-plugin-styled-components": "^1.11.1",
 		"compression-webpack-plugin": "^5.0.2",
 		"cookie-parser": "^1.4.4",
